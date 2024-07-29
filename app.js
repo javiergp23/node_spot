@@ -196,7 +196,7 @@ async function broadcast(){
                 }
             }
         }catch(err){
-
+            await sleep(process.env.SLEEP_TIME)
         }
     }
 }
@@ -216,3 +216,5 @@ async function init(){
 
     broadcast()
 }
+
+init()
