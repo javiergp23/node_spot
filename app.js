@@ -58,7 +58,44 @@ function _logProfits(price){
         `Balance: ${m1Balaance} ${MARKET1}, ${m2Balance.toFixed(2)} ${MARKET2}, Current: ${parseFloat(m1Balance * price + m2Balance)} ${MARKET2}, Initial: ${initialBalance.toFixed(2)} ${MARKET2}`)
 }
 
+async function _buy(price, amount){
+    if(parseFloat(store.get(`${MARKET2.tolowerCase()}_balance`)) >= BUY_ORDER_AMOUNT * price){
+        var orders = store.get('orders')
+        var factor = process.env.PRICE_PERCENT * price / 100
 
+        const order = {
+            buy_price: price,
+            amount,
+            sell_price: price + factor,
+            sold_price: 0,
+            status: 'pending',
+            profit: 0
+        }
+
+        log(`
+            Buying ${MARKET1}
+            ==================
+            amountIn: ${parseFloat(BUY_ORDER_AMOUNT * price).toFixed(2)} ${MARKET2}
+            amountOut: ${BUY_ORDER_AMOUNT} ${MARKET1}
+        `)
+        const res = await client.marketBuy(MARKET, order.amount)
+        if(res && res.status == 'FILLED'){
+            order.status = 'bought'
+            order.id = res.orderId
+            order.buy_price = parseFloat(res.fills[0].price)
+
+            orders.push(order)
+            store.put('start_price', order.buy_price)
+            await _updateBalances()
+
+            logColor(colors.green, '===========================================')
+            logColor(colors.green, `Bought: ${BUY_ORDER_AMOUNT} ${MARKET1} for ${parseFloat(BUY_ORDER_AMOUNT * price).toFixed(2)} ${MARKET2}, price: ${order.buy_price}\n`)
+            logColor(colors.green, '===========================================')
+
+            await _calculateProfits()
+        }else _newPriceReset(2, BUY_ORDER_AMOUNT * price, price)
+    }else _newPriceReset(2, BUY_ORDER_AMOUNT * price, price)
+}
 
 async function broadcast(){
     while (true){
