@@ -11,7 +11,7 @@ const BUY_ORDER_AMOUNT = process.argv[4]
 
 const store = new Storage(`./data/${MARKET}.json`);
 
-const sleep = (timeMs) = new Promise((resolve) => setTimeout(resolve, timeMs));
+const sleep = (timeMs) => new Promise(resolve => setTimeout(resolve, timeMs));
 
 async function _balances(){
     return await client.balance()
@@ -58,6 +58,7 @@ function _logProfits(price){
         `Balance: ${m1Balaance} ${MARKET1}, ${m2Balance.toFixed(2)} ${MARKET2}, Current: ${parseFloat(m1Balance * price + m2Balance)} ${MARKET2}, Initial: ${initialBalance.toFixed(2)} ${MARKET2}`)
 }
 
+// Buy function
 async function _buy(price, amount){
     if(parseFloat(store.get(`${MARKET2.tolowerCase()}_balance`)) >= BUY_ORDER_AMOUNT * price){
         var orders = store.get('orders')
@@ -97,7 +98,7 @@ async function _buy(price, amount){
     }else _newPriceReset(2, BUY_ORDER_AMOUNT * price, price)
 }
 
-
+// sell function
 async function _sell(price){
     const orders = store.get('orders')
     const toSold = []
@@ -180,7 +181,7 @@ async function broadcast(){
                     store.put('percent', `+${parseFloat(percent).toFixed(3)}`)
 
                     if(percent >= process.env.PRICE_PERCENT)
-                    await _selly(marketPrice, BUY_ORDER_AMOUNT)
+                    await _sell(marketPrice, BUY_ORDER_AMOUNT)
                 }else if(marketPrice < startPrice){
                     var factor = (startPrice - marketPrice)
                     var percent = 100 * factor / startPrice
@@ -204,7 +205,7 @@ async function broadcast(){
 async function init(){
     if(process.argv[5] !== 'resume'){
         const price = await client.prices(MARKET)
-        store.put('start_price', parseFloat(price(MARKET)))
+        store.put('start_price', parseFloat(price[MARKET]))
         store.put('orders', [])
         store.put('profits', 0)
         const balances = await _balances()
